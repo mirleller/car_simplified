@@ -1,3 +1,4 @@
+#include <math.h>
 #include "common.h"
 #include "include.h"
 #include "math.h"
@@ -6,6 +7,8 @@
 #include "Scopeinterface.h"
 #include "filter_2.h"
 #include "OLED_I2C.h"
+#include "calculate_PWM.h"
+#include "UI.h"
 //控制平衡的PID
 extern uint32 Timer;                 //用于计数
 
@@ -17,7 +20,7 @@ extern uint32 Timer;                 //用于计数
 #define pwm_s 40
 float  P=3.0;
 float  I=0.0008;       //
-float  D=1.0;
+float  D=1.4;
 PID_ angle_PID;
 uint8 _flag=0;
 float angle_last=0;
@@ -47,13 +50,14 @@ int16   B_V=0;                        //编码器方波数
 float   B_V_=0;                       //存储平均值
 //float v_aim=10.0*(dt/0.026);          //目标速度
 
-float v_aim=15.0;          //目标速度
+float v_aim=10.0;          //目标速度
 int8  v_flag=0;                       //目标速度改变时，从新开始积分
 
 //控制差速的PID
-float   Pe=1.0;
-float   Ie=0.0020;
-float   De=0.01;
+float   Pe=1.7;
+float   Ie=0.0050;
+float   De=0.3;
+float   e_I=0;
 PID_  turn_PID;
 
 extern int16   B_VL,B_VR;           //编码器读值
@@ -65,7 +69,7 @@ float   Kvr=0.00;
 
 
 //float d_pre=0;
-int Tu=50;                          //速度环周期
+int Tu=100;                          //速度环周期
 int Tt=25;                         //转向环周期
 
 float E_d=0;
@@ -136,7 +140,7 @@ void calculate_PWM(float angle,float Gyr)
   B_V=(B_VL+B_VR)/2;
   
   I_xx(&xx1,Tu,B_V,&v_1);
-  v_v=v_aim*Tu/50-v_1;
+  v_v=v_aim-v_1;
   //OLED_ShowInt(0,7,(int16)(v_v),1);
   I_xx(&xxl,Tt,B_VL,&v_l);
   I_xx(&xxr,Tt,B_VR,&v_r);
@@ -161,15 +165,20 @@ void calculate_PWM(float angle,float Gyr)
     xx1+=(float)(v_aim-B_V);
   */
   
-  if((_flag&(unsigned)0x02)==0)
+  if(~(_flag&_flag_va))
+    _flag&=~(_flag_vi);
+  if(~(_flag&_flag_va))
+    _flag&=~(_flag_ei);
+  
+  if((_flag&(unsigned)_flag_vi)==0)
   {
     if(((B_V-v_aim)<0.1*v_aim)&&((B_V-v_aim)>(-0.1*v_aim)))
     {
-      _flag|=(unsigned)0x02;
+      _flag|=(unsigned)_flag_vi;
      xx2=0;
     }
   }
-  if((_flag&(unsigned)0x02)==1)
+  if((_flag&(unsigned)_flag_vi)==1)
     xx2+=(float)(v_aim-B_V);
   
   v_PID.ek=xx1;
@@ -188,11 +197,11 @@ void calculate_PWM(float angle,float Gyr)
   angle_last=angle;
   
   
-  if(!(_flag&((unsigned)0x01)))
+  if(!(_flag&((unsigned)_flag_st)))
   {
     if(angle>2000||angle<-1500||Gyr<-1500||B_V>=500||B_V<=-500||B_VL>=500||B_VL<=-500||B_VR>=500||B_VR<=-500)//跌倒了赶紧站起来
     {
-      _flag|=(unsigned)0x01;
+      _flag|=(unsigned)_flag_st;
       ds+=I*A_;
     }
     else                                //正在跑
@@ -202,11 +211,11 @@ void calculate_PWM(float angle,float Gyr)
       ds=da;
     }
   }
-  else if((_flag&((unsigned)0x01)))
+  else if((_flag&((unsigned)_flag_st)))
   {
     if((angle<150)&&(angle>-150)&&(Gyr>-500))//如果站起来了就继续跑
     {
-      _flag&=(unsigned)0xfe;
+      _flag&=(unsigned)(~_flag_st);
       if(Timer%(Tu/5)==0)
         ifstand(v_v,xx2,&da,d,Gyr);
       ds=da;
@@ -215,7 +224,8 @@ void calculate_PWM(float angle,float Gyr)
       ds+=I*A_;
   }
   
-  d+=ds;
+  //if(functionFlag&0x04)
+    //d+=ds;
   
   
   //d_pre=d;
@@ -228,7 +238,8 @@ void calculate_PWM(float angle,float Gyr)
   else if(d<0)
     d-=pwm_s;
   
-  e_p=100000000.0;
+  //if(functionFlag&0x02)
+    e_p=100000000.0;
   
   //d_l=d*(1-1/e_p);
   //d_r=d*(1+1/e_p);
@@ -249,10 +260,45 @@ void calculate_PWM(float angle,float Gyr)
       e_B=(float)(v_l+v_r)/(v_r-v_l);
   }
   
+  if(((2.0/fabs(e_B))>abs(B_V))&&abs(B_V)<2)
+  {
+    if(e_B>0)
+      e_B=2.0/abs(B_V);
+    else if(e_B<0)
+      e_B=-2.0/abs(B_V);
+  }
+  
   if(e_B<0.5&&e_B>-0.5&&(B_V<4&&B_V>-4))
     turn_PID.ek=(1.0/e_p-1.0/e_B)/50;
   else
     turn_PID.ek=1.0/e_p-1.0/e_B;
+  
+  /*
+  if((_flag&(unsigned)_flag_ei)==0)
+  {
+    if(e_p>0)
+    {
+      if((turn_PID.ek<(1+0.3)*e_p)&&(turn_PID.ek>(1-0.3)*e_p))
+      {
+        _flag|=(unsigned)_flag_ei;
+      e_I=0;
+      }
+    }
+    else
+    {
+      if((turn_PID.ek>(1+0.3)*e_p)&&(turn_PID.ek<(1-0.3)*e_p))
+      {
+        _flag|=(unsigned)_flag_ei;
+      e_I=0;
+      }
+    }
+  }
+  if((_flag&(unsigned)_flag_ei)==1)
+    e_I+=(float)(v_aim-B_V);
+  */
+  
+  e_I+=turn_PID.ek;
+  
   if(B_V>0)
     E_d=(Pe*turn_PID.ek+De*(turn_PID.ek-turn_PID.ek_1))*(1.0+(float)B_V/20);
   else
@@ -276,7 +322,8 @@ void calculate_PWM(float angle,float Gyr)
   turn_PID.ek_2=turn_PID.ek_1;
   turn_PID.ek_1=turn_PID.ek;
   
-  
+  if(d_r>0)d_r+=25;
+  else  if(d_r<0)d_r-=25;
   //B_V_pre=B_V;
   //e_B_V_pre=1/e_B;
   
@@ -323,20 +370,20 @@ void ifstand(float xx1,float xx2,float *da,float d,float Gyr)
   if(xx2<=0)
   {
     if(xx1>=0)
-      *da=Pv*xx1+Pv*0.001*xx2;
+      *da=Pv*xx1+Pv*0.00*xx2;
     else
-      *da=Pv*xx1+Pv*0.001*xx2;
+      *da=Pv*xx1+Pv*0.00*xx2;
   }
   else
   {
     if(xx1>=0)
-      *da=1*Pv*xx1+Pv*0.001*xx2;
+      *da=2*Pv*xx1+Pv*0.00*xx2;
     else
       
-      *da=1*Pv*xx1+Pv*0.001*xx2;
+      *da=2*Pv*xx1+Pv*0.00*xx2;
   }
   
-  
+  /*
   if(xx1>0)
   {
     if(Gyr>0)
@@ -359,7 +406,7 @@ void ifstand(float xx1,float xx2,float *da,float d,float Gyr)
      *da=800;
   if((*da)<(-8800))
      *da=-800;
-
+*/
 }
 
 

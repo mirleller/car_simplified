@@ -353,7 +353,7 @@ void OLED_DrawBMP(unsigned char x0,unsigned char y0,unsigned char x1,unsigned ch
   */
 void OLED_ShowInt(unsigned char x0, unsigned char y0, int num, unsigned char TextSize)
 {
-  char ch[7]="      ";
+  char ch[7]="      \0";
     int i=0;
     char flag=0;
     if(num<0)
@@ -378,4 +378,22 @@ void OLED_ShowInt(unsigned char x0, unsigned char y0, int num, unsigned char Tex
             ch[i]=temp;
      }
     OLED_ShowStr(x0,y0,(unsigned char*)ch,TextSize);
+}
+
+void OLED_ShowDouble(unsigned char x, unsigned char y, double num, unsigned char TextSize)
+{
+    int n1=num;
+    OLED_ShowInt(x,y,num,TextSize);
+    if(num<1e-6)
+      num=-num;
+    int n2=(num-n1)*100;
+    int k=0;
+    do{
+      k++;
+      n1/=10;
+    }while(n1>0);
+    if(n2>0){
+      OLED_ShowStr(x+k*(TextSize*8),y,".",TextSize);
+      OLED_ShowInt(x+(k+1)*(TextSize*8),y,n2,TextSize);
+    } 
 }

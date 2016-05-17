@@ -1,4 +1,5 @@
 #include "Magn.h"
+#include "UI.h"
 
 #define adc_precise 1023  //计算精度  三种可选
                          //  ADC_12bit 4095
@@ -73,8 +74,8 @@ void calcu_track(void)
           j=0,
           k=0,
           l=0,
-          m=-1,
-          n=-1;
+          m=-1,     //标记阀值
+          n=-1;     //标记差值
   k=sizeof(fa)/4;
   l=sizeof(cha)/4;
   if(e<0)e=-e;
@@ -94,6 +95,8 @@ void calcu_track(void)
     break;
    }
   }
+  UI_ShowInt(45,0,m,1);
+  UI_ShowInt(45,1,n,1);
   if(m==-1||n==-1)
   {
     if(e_p_pre>0)e_p=0.4;

@@ -229,14 +229,14 @@ void PIT0_IRQHandler(void)
      UI_ShowInt(25,6,(int16)((B_VR+B_VL)/2),1);
       
 #if 1
-   if(_flag&0x04)
+   if(_flag&_flag_sh)
    {
-     _flag&=0xfb;
-    OLED_ShowInt(0,0,ad_H_L,1);         //在OLED上显示ADC转换通道的读数
-    OLED_ShowInt(0,1,ad_H_M,1);
-    OLED_ShowInt(0,2,ad_H_R,1);
-    OLED_ShowInt(0,3,ad_V_L,1);
-    OLED_ShowInt(0,4,ad_V_R,1);
+     _flag&=(~_flag_sh);
+    UI_ShowInt(0,0,ad_H_L,1);         //在OLED上显示ADC转换通道的读数
+    UI_ShowInt(0,1,ad_H_M,1);
+    UI_ShowInt(0,2,ad_H_R,1);
+    UI_ShowInt(0,3,ad_V_L,1);
+    UI_ShowInt(0,4,ad_V_R,1);
    }
 #endif
    
@@ -249,6 +249,9 @@ void PIT0_IRQHandler(void)
 #endif
    Timer++;
    if(Timer==27027000)Timer=0;
+   
+   if(~(_flag&_flag_va))             //清除速度改变的标志位
+     _flag|=_flag_va;
    
    while(CH!=0)
    {
@@ -388,7 +391,7 @@ void Stop_pwm(void)
         else
           if(gpio_get(PTA27)==1)
           {
-            _flag|=0x04;
+            _flag|=_flag_sh;
           }
     }
 }
