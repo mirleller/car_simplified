@@ -75,8 +75,11 @@ void get_D_Z_GYR(void);
  *  @brief      main函数
  *  @since      v5.0
 
+
+
  *  @note       FTM PWM 测试
  */
+
 void main(void)
 { 
  //   uint8 i=0;
@@ -94,7 +97,7 @@ void main(void)
      UI_Add_Double("v_aim",&v_aim);
      UI_Add_Double("Pe   ",&Pe);
      UI_Add_Double("De   ",&De);
-     
+     UI_Add_Double("as   ",&as);
      
      UI_ShowInt(25,6,(int16)((B_VR+B_VL)/2),1);
      
@@ -253,12 +256,13 @@ void PIT0_IRQHandler(void)
    if(~(_flag&_flag_va))             //清除速度改变的标志位
      _flag|=_flag_va;
    
-   while(CH!=0)
+   /*
+   //while(CH!=0)
    {
      if(PIT_TFLG0==1)
        while(1);
    }
-   
+   */
 }
 
 

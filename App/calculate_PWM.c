@@ -19,8 +19,8 @@ extern uint32 Timer;                 //用于计数
 #define FTM0_precision  1000
 #define pwm_s 40
 float  P=3.0;
-float  I=0.0008;       //
-float  D=1.4;
+float  I=0.00008;       //
+float  D=3.0;
 PID_ angle_PID;
 uint8 _flag=0;
 float angle_last=0;
@@ -32,7 +32,7 @@ int16   D_A[ND];                 //存储采集到的数据
 uint32  NI=0;                      //用来计数
 
 //控制速度的PID
-float   PV=20.0;
+float   PV=50.0;
 #define Pv  (P*PV)   
 float   Iv=0.005;
 float   Dv=0.09;
@@ -50,13 +50,13 @@ int16   B_V=0;                        //编码器方波数
 float   B_V_=0;                       //存储平均值
 //float v_aim=10.0*(dt/0.026);          //目标速度
 
-float v_aim=10.0;          //目标速度
+float v_aim=20.0;          //目标速度
 int8  v_flag=0;                       //目标速度改变时，从新开始积分
 
 //控制差速的PID
-float   Pe=1.7;
+float   Pe=2.5;
 float   Ie=0.0050;
-float   De=0.3;
+float   De=0.003;
 float   e_I=0;
 PID_  turn_PID;
 
@@ -189,17 +189,16 @@ void calculate_PWM(float angle,float Gyr)
   
   
   if(a_al>=0)
-    d=P*angle+D*a_al+5e-3*a_al*a_al;
+    d=P*angle+D*a_al+25e-3*a_al*a_al;
   else
-    d=P*angle+D*a_al-5e-3*a_al*a_al;
-  
+    d=P*angle+D*a_al-25e-3*a_al*a_al;
     
   angle_last=angle;
   
   
   if(!(_flag&((unsigned)_flag_st)))
   {
-    if(angle>2000||angle<-1500||Gyr<-1500||B_V>=500||B_V<=-500||B_VL>=500||B_VL<=-500||B_VR>=500||B_VR<=-500)//跌倒了赶紧站起来
+    if(angle>1000||angle<-700||Gyr<-1500||B_V>=500||B_V<=-500||B_VL>=500||B_VL<=-500||B_VR>=500||B_VR<=-500)//跌倒了赶紧站起来
     {
       _flag|=(unsigned)_flag_st;
       ds+=I*A_;
@@ -207,7 +206,7 @@ void calculate_PWM(float angle,float Gyr)
     else                                //正在跑
     {
       if(Timer%(Tu/5)==0)
-        ifstand(v_v,xx2,&da,d,Gyr);
+        ifstand(v_v,xx2,&da,d,a_al);
       ds=da;
     }
   }
@@ -217,15 +216,15 @@ void calculate_PWM(float angle,float Gyr)
     {
       _flag&=(unsigned)(~_flag_st);
       if(Timer%(Tu/5)==0)
-        ifstand(v_v,xx2,&da,d,Gyr);
+        ifstand(v_v,xx2,&da,d,a_al);
       ds=da;
     }
     else
       ds+=I*A_;
   }
   
-  //if(functionFlag&0x04)
-    //d+=ds;
+  if(functionFlag&0x04)
+    d+=ds;
   
   
   //d_pre=d;
@@ -238,7 +237,7 @@ void calculate_PWM(float angle,float Gyr)
   else if(d<0)
     d-=pwm_s;
   
-  //if(functionFlag&0x02)
+  if(!functionFlag&0x02)
     e_p=100000000.0;
   
   //d_l=d*(1-1/e_p);
@@ -256,21 +255,36 @@ void calculate_PWM(float angle,float Gyr)
   {
     if(((v_l+v_r)==0)&&(v_r!=0))
       e_B=0.01;
-    else 
+    else
       e_B=(float)(v_l+v_r)/(v_r-v_l);
   }
   
-  if(((2.0/fabs(e_B))>abs(B_V))&&abs(B_V)<2)
+  if(abs(B_V)<2)
   {
-    if(e_B>0)
-      e_B=2.0/abs(B_V);
-    else if(e_B<0)
-      e_B=-2.0/abs(B_V);
+    if(((10.0/fabs(e_B))>abs(B_V)))
+    {
+      if(e_B>0)
+        e_B=10.0/abs(B_V);
+      else if(e_B<0)
+        e_B=-10.0/abs(B_V);
+    }
+  }
+  else
+  {
+    if(fabs(e_B)<0.01)
+    {
+      if(e_B>0)e_B=0.01;
+      else if(e_B<0)e_B=-0.01;
+    }
+    if(((2.0/fabs(e_B))>abs(B_V)))
+    {
+      if(e_B>0)
+        e_B=2.0/abs(B_V);
+      else if(e_B<0)
+        e_B=-2.0/abs(B_V);
+    }
   }
   
-  if(e_B<0.5&&e_B>-0.5&&(B_V<4&&B_V>-4))
-    turn_PID.ek=(1.0/e_p-1.0/e_B)/50;
-  else
     turn_PID.ek=1.0/e_p-1.0/e_B;
   
   /*
@@ -297,12 +311,12 @@ void calculate_PWM(float angle,float Gyr)
     e_I+=(float)(v_aim-B_V);
   */
   
-  e_I+=turn_PID.ek;
+  //e_I+=turn_PID.ek;
   
   if(B_V>0)
-    E_d=(Pe*turn_PID.ek+De*(turn_PID.ek-turn_PID.ek_1))*(1.0+(float)B_V/20);
+    E_d=(Pe*turn_PID.ek+De*(turn_PID.ek-turn_PID.ek_1))*(1.0+(float)B_V/70);
   else
-    E_d=(Pe*turn_PID.ek+De*(turn_PID.ek-turn_PID.ek_1))*(1.0-(float)B_V/20);
+    E_d=(Pe*turn_PID.ek+De*(turn_PID.ek-turn_PID.ek_1))*(1.0-(float)B_V/70);
   
   d_l=d*(1.0-((1.0/e_p)+E_d));
   d_r=d*(1.0+((1.0/e_p)+E_d));
@@ -310,6 +324,10 @@ void calculate_PWM(float angle,float Gyr)
   //d_l=d*(1-((1/e_p)+0));
   //d_r=d*(1+((1/e_p)+0));
   
+  
+  ////////////////
+  //发现问题：急转弯时，小车轮子转速骤降，车体前倾，轮子减速容易，加速难
+  ///////////////
   d_l+=(-B_VL*dt/0.005)*Kvl*(200/Tu);
   d_r+=(-B_VR*dt/0.005)*Kvr*(200/Tu);
   
@@ -321,9 +339,10 @@ void calculate_PWM(float angle,float Gyr)
   
   turn_PID.ek_2=turn_PID.ek_1;
   turn_PID.ek_1=turn_PID.ek;
-  
+  /*
   if(d_r>0)d_r+=25;
   else  if(d_r<0)d_r-=25;
+  */
   //B_V_pre=B_V;
   //e_B_V_pre=1/e_B;
   
@@ -377,36 +396,38 @@ void ifstand(float xx1,float xx2,float *da,float d,float Gyr)
   else
   {
     if(xx1>=0)
-      *da=2*Pv*xx1+Pv*0.00*xx2;
+      *da=1*Pv*xx1+Pv*0.00*xx2;
     else
       
-      *da=2*Pv*xx1+Pv*0.00*xx2;
+      *da=1*Pv*xx1+Pv*0.00*xx2;
   }
   
-  /*
+  
   if(xx1>0)
   {
-    if(Gyr>0)
-      *da+=Gyr*D/4;
+    //if(Gyr>0)
+    //  *da+=Gyr*D/4;
     if(Gyr<0)
-      *da-=Gyr*D/4;
+      *da-=(Gyr*D/4-25e-3*Gyr*Gyr)/3*2;
   }
   
   
-  else if(xx1<0)
+  //else 
+  /*
+    if(xx1<0)
   {
     if(Gyr>0)
-      *da-=Gyr*D/4;
-    if(Gyr<0)
-      *da+=Gyr*D/4;
+      *da-=Gyr*D/4+25e-3*Gyr*Gyr;
+    //if(Gyr<0)
+    //  *da+=Gyr*D/4;
   }
-  
+  */
   
   if((*da)>(800))
      *da=800;
   if((*da)<(-8800))
      *da=-800;
-*/
+
 }
 
 
