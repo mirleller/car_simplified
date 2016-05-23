@@ -56,7 +56,7 @@ int8  v_flag=0;                       //目标速度改变时，从新开始积分
 //控制差速的PID
 float   Pe=2.5;
 float   Ie=0.0050;
-float   De=0.003;
+float   De=0.2;
 float   e_I=0;
 PID_  turn_PID;
 
@@ -70,7 +70,7 @@ float   Kvr=0.00;
 
 //float d_pre=0;
 int Tu=100;                          //速度环周期
-int Tt=25;                         //转向环周期
+int Tt=20;                         //转向环周期
 
 float E_d=0;
   
@@ -136,6 +136,7 @@ void calculate_PWM(float angle,float Gyr)
   float a_al=angle-angle_last;
   float ds=0;
   float v_v=0;
+  float ep=0;
   
   B_V=(B_VL+B_VR)/2;
   
@@ -189,9 +190,9 @@ void calculate_PWM(float angle,float Gyr)
   
   
   if(a_al>=0)
-    d=P*angle+D*a_al+25e-3*a_al*a_al;
+    d=P*angle+D*a_al+20e-3*a_al*a_al;
   else
-    d=P*angle+D*a_al-25e-3*a_al*a_al;
+    d=P*angle+D*a_al-20e-3*a_al*a_al;
     
   angle_last=angle;
   
@@ -202,12 +203,17 @@ void calculate_PWM(float angle,float Gyr)
     {
       _flag|=(unsigned)_flag_st;
       ds+=I*A_;
+      ep=10000000.0;
     }
     else                                //正在跑
     {
       if(Timer%(Tu/5)==0)
+      {
         ifstand(v_v,xx2,&da,d,a_al);
+      }
       ds=da;
+      calcu_track();
+      ep=e_p;
     }
   }
   else if((_flag&((unsigned)_flag_st)))
@@ -216,11 +222,18 @@ void calculate_PWM(float angle,float Gyr)
     {
       _flag&=(unsigned)(~_flag_st);
       if(Timer%(Tu/5)==0)
+      {
         ifstand(v_v,xx2,&da,d,a_al);
+      }
       ds=da;
+      calcu_track();
+      ep=e_p;
     }
     else
+    {
       ds+=I*A_;
+      ep=10000000.0;
+    }
   }
   
   if(functionFlag&0x04)
@@ -230,7 +243,6 @@ void calculate_PWM(float angle,float Gyr)
   //d_pre=d;
   
   
-  calcu_track();
   
   if(d>0)
     d+=pwm_s;
@@ -238,7 +250,7 @@ void calculate_PWM(float angle,float Gyr)
     d-=pwm_s;
   
   if(!functionFlag&0x02)
-    e_p=100000000.0;
+    ep=100000000.0;
   
   //d_l=d*(1-1/e_p);
   //d_r=d*(1+1/e_p);
@@ -317,17 +329,20 @@ void calculate_PWM(float angle,float Gyr)
     E_d=(Pe*turn_PID.ek+De*(turn_PID.ek-turn_PID.ek_1))*(1.0+(float)B_V/70);
   else
     E_d=(Pe*turn_PID.ek+De*(turn_PID.ek-turn_PID.ek_1))*(1.0-(float)B_V/70);
+   
   
-  d_l=d*(1.0-((1.0/e_p)+E_d));
-  d_r=d*(1.0+((1.0/e_p)+E_d));
+  float tt=(1.0/e_p)+E_d;
+  int b=abs(B_V);
+  float et=fabs(1.0/e_p);
+  float ss=1.0+(0.002*b*b+0.0001*b)*(5.0*et*et*et+1.2*et*et+0.01*et);
+  
+  d_l=d*ss*(1.0-tt);
+  d_r=d*ss*(1.0+tt);
   
   //d_l=d*(1-((1/e_p)+0));
   //d_r=d*(1+((1/e_p)+0));
   
-  
-  ////////////////
-  //发现问题：急转弯时，小车轮子转速骤降，车体前倾，轮子减速容易，加速难
-  ///////////////
+
   d_l+=(-B_VL*dt/0.005)*Kvl*(200/Tu);
   d_r+=(-B_VR*dt/0.005)*Kvr*(200/Tu);
   
