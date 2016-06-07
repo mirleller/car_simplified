@@ -11,16 +11,17 @@
 #include "UI.h"
 //控制平衡的PID
 extern uint32 Timer;                 //用于计数
+extern float Fore_Gyr;
 
 
   float d=0;
   float da=0;
 
 #define FTM0_precision  1000
-#define pwm_s 40
-float  P=3.0;
+#define pwm_s 25
+float  P=1.80;
 float  I=0.00008;       //
-float  D=3.0;
+float  D=0.980;
 PID_ angle_PID;
 uint8 _flag=0;
 float angle_last=0;
@@ -32,7 +33,7 @@ int16   D_A[ND];                 //存储采集到的数据
 uint32  NI=0;                      //用来计数
 
 //控制速度的PID
-float   PV=50.0;
+float   PV=30.0;
 #define Pv  (P*PV)   
 float   Iv=0.005;
 float   Dv=0.09;
@@ -50,13 +51,13 @@ int16   B_V=0;                        //编码器方波数
 float   B_V_=0;                       //存储平均值
 //float v_aim=10.0*(dt/0.026);          //目标速度
 
-float v_aim=20.0;          //目标速度
+float v_aim=19;          //目标速度
 int8  v_flag=0;                       //目标速度改变时，从新开始积分
 
 //控制差速的PID
-float   Pe=2.5;
+float   Pe=3.8000;
 float   Ie=0.0050;
-float   De=0.2;
+float   De=1.20000;
 float   e_I=0;
 PID_  turn_PID;
 
@@ -70,9 +71,9 @@ float   Kvr=0.00;
 
 //float d_pre=0;
 int Tu=100;                          //速度环周期
-int Tt=20;                         //转向环周期
+int Tt=10;                         //转向环周期
 
-float E_d=0;
+float E_d=0;                            //目标半径与实际半径的差值
   
 float xx1=0,
       xx2=0;
@@ -83,10 +84,11 @@ float xxl=0,
 float v_1=0;
 float v_r=0;
 float v_l=0;
-//int d_=100;
+//float d_=0.0;
 
 //float Fore_d=0;
-
+int32 d_r_pre=0,
+      d_l_pre=0;
 
 void cal_I(float angle);
 void cal_I_V(int16 B_V);
@@ -188,18 +190,29 @@ void calculate_PWM(float angle,float Gyr)
   
   cal_I(angle);
   
-  
-  if(a_al>=0)
-    d=P*angle+D*a_al+20e-3*a_al*a_al;
-  else
-    d=P*angle+D*a_al-20e-3*a_al*a_al;
+  d=0;
+  int b=abs(B_V);
+  if(functionFlag&0x01)
+  {
+      float ga=0;
+    //if(fabs(angle)<200.0)
+      //ga=0.2*(D*fabs(a_al)+20e-3*a_al*a_al);
+    //else
+    //ga=D*fabs(a_al)+1e-3*a_al*a_al;
+      ga=D*fabs(a_al);
+    if(a_al>=0)
+      d=P*angle+ga;
+    else
+      d=P*angle-ga;
     
+  }
+  
   angle_last=angle;
   
   
   if(!(_flag&((unsigned)_flag_st)))
   {
-    if(angle>1000||angle<-700||Gyr<-1500||B_V>=500||B_V<=-500||B_VL>=500||B_VL<=-500||B_VR>=500||B_VR<=-500)//跌倒了赶紧站起来
+    if(angle>1000||angle<-1000||B_V>=500||B_V<=-500||B_VL>=500||B_VL<=-500||B_VR>=500||B_VR<=-500)//跌倒了赶紧站起来
     {
       _flag|=(unsigned)_flag_st;
       ds+=I*A_;
@@ -218,7 +231,7 @@ void calculate_PWM(float angle,float Gyr)
   }
   else if((_flag&((unsigned)_flag_st)))
   {
-    if((angle<150)&&(angle>-150)&&(Gyr>-500))//如果站起来了就继续跑
+    if((angle<150)&&(angle>-150)&&(Gyr>-500)&&(Gyr<500))//如果站起来了就继续跑
     {
       _flag&=(unsigned)(~_flag_st);
       if(Timer%(Tu/5)==0)
@@ -243,13 +256,13 @@ void calculate_PWM(float angle,float Gyr)
   //d_pre=d;
   
   
-  
+  ep=e_p;
   if(d>0)
     d+=pwm_s;
   else if(d<0)
     d-=pwm_s;
   
-  if(!functionFlag&0x02)
+  if(!(functionFlag&0x02))
     ep=100000000.0;
   
   //d_l=d*(1-1/e_p);
@@ -257,7 +270,7 @@ void calculate_PWM(float angle,float Gyr)
  
   if(v_l==v_r)
   {
-    if(e_p>0)
+    if(ep>0)
       e_B=100000000.0;
     else if(e_p<0)
       e_B=-100000000.0;
@@ -265,20 +278,25 @@ void calculate_PWM(float angle,float Gyr)
   
   else
   {
-    if(((v_l+v_r)==0)&&(v_r!=0))
-      e_B=0.01;
+    if(((v_l+v_r)==0))
+    {
+      if(v_r>v_l)
+        e_B=0.01;
+      else
+        e_B=-0.01;
+    }
     else
       e_B=(float)(v_l+v_r)/(v_r-v_l);
   }
-  
+ 
   if(abs(B_V)<2)
   {
-    if(((10.0/fabs(e_B))>abs(B_V)))
+    if(((1000.0/fabs(e_B))>abs(B_V)))
     {
       if(e_B>0)
-        e_B=10.0/abs(B_V);
+        e_B=1000.0/abs(B_V);
       else if(e_B<0)
-        e_B=-10.0/abs(B_V);
+        e_B=-1000.0/abs(B_V);
     }
   }
   else
@@ -288,16 +306,16 @@ void calculate_PWM(float angle,float Gyr)
       if(e_B>0)e_B=0.01;
       else if(e_B<0)e_B=-0.01;
     }
-    if(((2.0/fabs(e_B))>abs(B_V)))
+    if(((10.0/fabs(e_B))>abs(B_V)))
     {
       if(e_B>0)
-        e_B=2.0/abs(B_V);
+        e_B=10.0/abs(B_V);
       else if(e_B<0)
-        e_B=-2.0/abs(B_V);
+        e_B=-10.0/abs(B_V);
     }
   }
   
-    turn_PID.ek=1.0/e_p-1.0/e_B;
+    turn_PID.ek=1.0/ep-1.0/e_B;
   
   /*
   if((_flag&(unsigned)_flag_ei)==0)
@@ -324,27 +342,49 @@ void calculate_PWM(float angle,float Gyr)
   */
   
   //e_I+=turn_PID.ek;
+ 
+    E_d=(Pe*turn_PID.ek+De*(turn_PID.ek-turn_PID.ek_1))*(1.0+(float)abs(B_V)/70.0);
+    /*
+    float tt=0.0;
+    //tt=1.0/ep;
+  //if(fabs(E_d)>5.0)
+    tt=(1.0/ep)+E_d;
+    */
+    
+    float et=fabs(1.0/ep);
+    float ss=1.0+(5.0*et*et*et+1.0*et*et+0.001*et);
+    ss=1.0;
+    if((d_r-d_r_pre)<-30&&(d_l-d_l_pre)<-30)
+    {
+      d_l=d*ss*(1.0-1.0/ep);
+      d_r=d*ss*(1.0+1.0/ep);
+    }
+    else if(abs((d_r-d_r_pre)-(d_l-d_l_pre))<50)
+    {
+      d_l=d*ss*(1.0-1.0/ep);
+      d_r=d*ss*(1.0+1.0/ep);
+    }
+    else if((d_r-d_r_pre)>(d_l-d_l_pre))
+    {
+      d_l=d*ss*(1.0-1.0/ep-0.2*E_d);
+      d_r=d*ss*(1.0+1.0/ep+E_d);
+    }
+    else if((d_r-d_r_pre)<(d_l-d_l_pre))
+    {
+      d_l=d*ss*(1.0-1.0/ep-E_d);
+      d_r=d*ss*(1.0+1.0/ep+0.2*E_d);
+    }
   
-  if(B_V>0)
-    E_d=(Pe*turn_PID.ek+De*(turn_PID.ek-turn_PID.ek_1))*(1.0+(float)B_V/70);
-  else
-    E_d=(Pe*turn_PID.ek+De*(turn_PID.ek-turn_PID.ek_1))*(1.0-(float)B_V/70);
-   
   
-  float tt=(1.0/e_p)+E_d;
-  int b=abs(B_V);
-  float et=fabs(1.0/e_p);
-  float ss=1.0+(0.002*b*b+0.0001*b)*(5.0*et*et*et+1.2*et*et+0.01*et);
-  
-  d_l=d*ss*(1.0-tt);
-  d_r=d*ss*(1.0+tt);
-  
-  //d_l=d*(1-((1/e_p)+0));
-  //d_r=d*(1+((1/e_p)+0));
+  //d_l=d*(1.0-tt);
+  //d_r=d*(1.0+tt);
+  //ep=100000000.0;
+  //d_l=d*(1.0-((1.0/ep)+0));
+  //d_r=d*(1.0+((1.0/ep)+0));
   
 
-  d_l+=(-B_VL*dt/0.005)*Kvl*(200/Tu);
-  d_r+=(-B_VR*dt/0.005)*Kvr*(200/Tu);
+  //d_l+=(-B_VL*dt/0.005)*Kvl*(200/Tu);
+  //d_r+=(-B_VR*dt/0.005)*Kvr*(200/Tu);
   
   //E_d+=PID_calcu(turn_PID);
   
@@ -354,18 +394,22 @@ void calculate_PWM(float angle,float Gyr)
   
   turn_PID.ek_2=turn_PID.ek_1;
   turn_PID.ek_1=turn_PID.ek;
-  /*
-  if(d_r>0)d_r+=25;
-  else  if(d_r<0)d_r-=25;
-  */
+  
+  
   //B_V_pre=B_V;
   //e_B_V_pre=1/e_B;
   
   //d_r=d;
   //d_l=d;
-  
-   //d_r=300;
+  /*
+  if(d_r>0)d_r+=30;
+  else  if(d_r<0)d_r-=30;
+  */
+  //d_r=300;
   //d_l=300;
+  d_r_pre=d*(1.0+1.0/ep);
+  d_l_pre=d*(1.0-1.0/ep);
+  
   ///////////////////////////////////////////////////////////////////////
   if(d_r>(FTM0_precision-5))d_r=FTM0_precision-5;
   if(d_r<(-FTM0_precision+5))d_r=-(FTM0_precision)+5;
@@ -374,24 +418,24 @@ void calculate_PWM(float angle,float Gyr)
   
    if(d_r>=0)
   {
-    FTM_PWM_Duty(FTM0, FTM_CH4, (uint32)FTM0_precision-d_r);
-    FTM_PWM_Duty(FTM0, FTM_CH5, (uint32)FTM0_precision);
+    FTM_PWM_Duty(FTM0, FTM_CH6, (uint32)FTM0_precision-d_r);
+    FTM_PWM_Duty(FTM0, FTM_CH7, (uint32)FTM0_precision);
   }
   else
   {
-    FTM_PWM_Duty(FTM0, FTM_CH4, (uint32)FTM0_precision);
-    FTM_PWM_Duty(FTM0, FTM_CH5, (uint32)FTM0_precision+d_r);
+    FTM_PWM_Duty(FTM0, FTM_CH6, (uint32)FTM0_precision);
+    FTM_PWM_Duty(FTM0, FTM_CH7, (uint32)FTM0_precision+d_r);
   }
 
 if(d_l>=0)
   {
-    FTM_PWM_Duty(FTM0, FTM_CH6, (uint32)FTM0_precision);
-    FTM_PWM_Duty(FTM0, FTM_CH7, (uint32)FTM0_precision-d_l);
+    FTM_PWM_Duty(FTM0, FTM_CH4, (uint32)FTM0_precision);
+    FTM_PWM_Duty(FTM0, FTM_CH5, (uint32)FTM0_precision-d_l);
   }
   else
   {
-    FTM_PWM_Duty(FTM0, FTM_CH6, (uint32)FTM0_precision+d_l);
-    FTM_PWM_Duty(FTM0, FTM_CH7, (uint32)FTM0_precision);
+    FTM_PWM_Duty(FTM0, FTM_CH4, (uint32)FTM0_precision+d_l);
+    FTM_PWM_Duty(FTM0, FTM_CH5, (uint32)FTM0_precision);
   }
 }
 
@@ -406,7 +450,7 @@ void ifstand(float xx1,float xx2,float *da,float d,float Gyr)
     if(xx1>=0)
       *da=Pv*xx1+Pv*0.00*xx2;
     else
-      *da=Pv*xx1+Pv*0.00*xx2;
+      *da=1.4*Pv*xx1+Pv*0.00*xx2;
   }
   else
   {
@@ -414,7 +458,7 @@ void ifstand(float xx1,float xx2,float *da,float d,float Gyr)
       *da=1*Pv*xx1+Pv*0.00*xx2;
     else
       
-      *da=1*Pv*xx1+Pv*0.00*xx2;
+      *da=1.4*Pv*xx1+Pv*0.00*xx2;
   }
   
   
@@ -422,8 +466,8 @@ void ifstand(float xx1,float xx2,float *da,float d,float Gyr)
   {
     //if(Gyr>0)
     //  *da+=Gyr*D/4;
-    if(Gyr<0)
-      *da-=(Gyr*D/4-25e-3*Gyr*Gyr)/3*2;
+    //if(Gyr<0)
+      //*da-=(Gyr*D/4-25e-3*Gyr*Gyr)/3*2;
   }
   
   
@@ -450,6 +494,9 @@ void ifstand(float xx1,float xx2,float *da,float d,float Gyr)
 void cal_I(float angle)
 {
   uint8 i=0;
+  if(angle>200)angle-=200;
+  else if(angle<-200)angle+=200;
+  else angle=0;
   if(GP==0)
   {
     if(NI<ND)

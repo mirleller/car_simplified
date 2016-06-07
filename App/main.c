@@ -18,11 +18,11 @@
 //#define gp 0.9
 //#define ap (1-gp)
 
-int  D_Z_ACC=10;
+int  D_Z_ACC=206;
 int  D_Z_GYR=3;
 
 #define Ngyr  5    //角速度采样个数
-#define Nacc  4    //加速度计采样个数
+#define Nacc  5    //加速度计采样个数
 
 
 extern int16 ACC_X, ACC_Y, ACC_Z;
@@ -79,6 +79,7 @@ void get_D_Z_GYR(void);
 
  *  @note       FTM PWM 测试
  */
+
 
 void main(void)
 { 
@@ -243,11 +244,11 @@ void PIT0_IRQHandler(void)
    }
 #endif
    
-#if 0
+#if 1
    Outdata[0]=5*angle;
    Outdata[1]=5*car_angle;
    Outdata[2]=5*Gyr;
-   Outdata[3]=5*Fore_Gyr;
+   Outdata[3]=0;
    OutPut_Data(Outdata);
 #endif
    Timer++;
@@ -256,7 +257,7 @@ void PIT0_IRQHandler(void)
    if(~(_flag&_flag_va))             //清除速度改变的标志位
      _flag|=_flag_va;
    
-   /*
+  /*
    //while(CH!=0)
    {
      if(PIT_TFLG0==1)

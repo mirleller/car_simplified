@@ -9,26 +9,32 @@
 #define R 0.3
 #define H 1
 */
-#define Qg 1
-#define Rg 0.0
+//#define Qg 0.1
+//#define Rg 1000.0
 
-float Fore_Angle=0;
-float Fore_Gyr=0;
-float fore_gyr=0;
+//float Fore_Angle=0;
+//float Fore_Gyr=0;
 
-float PP=0.005;
-float PPg=0.05;
-
+//float PPg=400.0;
+//float Kgg=0.0;
 // dt=0.016;          //加速度计陀螺仪数据采集时间间隔（见主函数中的设定）
 
 float Filter(float angle_m,float gyro_m)
 {
-    static double x=0;       //最优角度初值
-    static double p=300;     //最优角度对应协方差初值
-    static double Q=0.0005;     //加速度计的协方差系数
-    static double R=300;         //
-    static double k=0;
-    double B=4.70;
+  /*
+    Fore_Gyr=Fore_Gyr;
+    PPg=PPg+Qg;
+    Kgg=PPg/(PPg+Rg);
+    Fore_Gyr=Fore_Gyr+Kgg*(gyro_m-Fore_Gyr);
+    PPg=(1-Kgg)*PPg;
+  */
+  
+    static double x=0.0;       //最优角度初值
+    static double p=300.0;     //最优角度对应协方差初值
+    static double Q=0.05;     //加速度计的协方差系数
+    static double R=1000.0;         //
+    static double k=0.0;
+    double B=4.50;//4.70
     
     x=x+gyro_m*B*dt;
     p=p+Q;
