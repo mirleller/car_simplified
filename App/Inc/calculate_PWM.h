@@ -1,5 +1,6 @@
 #ifndef _calculate_PWM_h_
 #define _calculate_PWM_h_
+#include "common.h"
 #define _flag_st  0x01      //直立标志位
 #define _flag_vi  0x02      //速度积分开始标志位
 #define _flag_sh  0x04      //显示AD读值标志位
@@ -14,6 +15,7 @@ extern float  D;
 extern float   PV;
 extern float   Dv;
 extern float v_aim;          //目标速度
+extern int16 B_V;
 
 //控制差速的PID
 extern float   Pe;
@@ -21,6 +23,7 @@ extern float   De;
 
 extern int Tu;                          //速度环周期
 
+extern uint8 _flag;
 
 extern void calculate_PWM(float Angle,float Gyr);
 void PID_INIT(void);

@@ -25,6 +25,7 @@ extern float e_p;                        //期望的两轮速度之比，左轮比右轮
 
 extern float e_p_pre;                   //上一时刻期望的两轮速度之比，左轮比右轮
 
+extern float as;
 void calcu_track(void);
 
 #endif
