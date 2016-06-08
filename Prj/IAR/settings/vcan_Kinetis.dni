@@ -9,7 +9,7 @@ TriggerName=main
 LimitSize=0
 ByteLimit=50
 [DebugChecksum]
-Checksum=1586555451
+Checksum=295172682
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -53,6 +53,11 @@ UseAuto=0
 TypeViolation=1
 UnspecRange=1
 ActionState=1
+[Disassemble mode]
+mode=0
+[Breakpoints2]
+Bp0=_ 0 "EMUL_CODE" "0x000048FE" 0 0 1 "" 0 "" 0
+Count=1
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""
@@ -60,6 +65,16 @@ Category=_ 0
 [TermIOLog]
 LoggingEnabled=_ 0
 LogFile=_ ""
+[Aliases]
+A0=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\App\UserInterface.c" ""
+A1=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\MK60_PIT.c" ""
+A2=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\MK60_adc.c" ""
+A3=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\MK60_i2c.c" ""
+A4=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\MK60_port.c" ""
+A5=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\MK60_uart.c" ""
+A6=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\misc.c" ""
+Count=7
+SuppressDialog=0
 [Trace1]
 Enabled=0
 ShowSource=1
@@ -71,19 +86,3 @@ Mode=1
 Graph=0
 Symbiont=0
 Exclusions=
-[Disassemble mode]
-mode=0
-[Breakpoints2]
-Count=0
-[Aliases]
-A0=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\App\UserInterface.c" ""
-A1=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\MK60_PIT.c" ""
-A2=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\MK60_adc.c" ""
-A3=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\MK60_i2c.c" ""
-A4=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\MK60_port.c" ""
-A5=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\MK60_uart.c" ""
-A6=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\misc.c" ""
-A7=_ "F:\车\恩智浦智能车比赛\CODE\car_simplified\App\main.c" ""
-A8=_ "F:\车\恩智浦智能车比赛\CODE\car_simplified\Lib\CMSIS\Inc\core_cm4.h" ""
-Count=9
-SuppressDialog=0
