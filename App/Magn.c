@@ -21,6 +21,7 @@ extern int16   B_VL,B_VR;           //编码器读值
 
 extern float v_aim;                //目标速度
 
+//下面两个数组暂不使用
 int cv[10]={0,5,10,15,20,25,30,35,40,45};
 float diav[][2]={{1.0,0.98},{0.98,0.94},{0.94,0.92},{0.92,0.87},{0.87,0.85},{0.85,0.83},{0.83,0.78},{0.78,0.72},{0.72,0.68}};
 
@@ -72,7 +73,7 @@ void calcu_track(void)
   //计算转速比
   float   e1=((float)(H_L-H_R))/adc_precise;   //差值
   float   e2=((float)(V_L-V_R))/adc_precise;
-  float   e=e1*Ke1+e1*Ke2;
+  float   e=e1*Ke1+e1*Ke2;      //计算平均差值
   //e=e1;
   float   afa=(adc_precise-H_M)/adc_precise; //中间电感值
   int16   si=0;
@@ -118,9 +119,9 @@ void calcu_track(void)
   }
   else
   {
-    e_p=(dia[m][n][1]-dia[m][n][0])*(((e-cha[n])/(cha[n+1]-cha[n]))*((afa-fa[m])/(fa[m+1]-fa[m])))+dia[m][n][0];
+    e_p=(dia[m][n][1]-dia[m][n][0])*(((e-cha[n])/(cha[n+1]-cha[n]))*((afa-fa[m])/(fa[m+1]-fa[m])))+dia[m][n][0];//计算转向半径
   }
-  if(((float)(V_L+V_R)/2.0/adc_precise)>0.85)
+  if(((float)(V_L+V_R)/2.0/adc_precise)>0.85)//判断十字
     if(e_p<10.0)
       e_p=10.0;
   if(si==-1)e_p=-e_p;

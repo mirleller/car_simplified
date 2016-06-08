@@ -70,8 +70,8 @@ float   Kvr=0.00;
 
 
 //float d_pre=0;
-int Tu=100;                          //速度环周期
-int Tt=10;                         //转向环周期
+int Tu=100;                          //速度环周期，单位：毫秒
+int Tt=10;                         //转向环周期，单位：毫秒
 
 float E_d=0;                            //目标半径与实际半径的差值
   
@@ -142,11 +142,11 @@ void calculate_PWM(float angle,float Gyr)
   
   B_V=(B_VL+B_VR)/2;
   
-  I_xx(&xx1,Tu,B_V,&v_1);
-  v_v=v_aim-v_1;
+  I_xx(&xx1,Tu,B_V,&v_1);//计算现在的速度（速度周期内的平均速度）
+  v_v=v_aim-v_1;         //目标速度与现在速度只差
   //OLED_ShowInt(0,7,(int16)(v_v),1);
-  I_xx(&xxl,Tt,B_VL,&v_l);
-  I_xx(&xxr,Tt,B_VR,&v_r);
+  I_xx(&xxl,Tt,B_VL,&v_l);//计算左轮在一个转向转向周期内的平均速度
+  I_xx(&xxr,Tt,B_VR,&v_r);//计算右轮在一个转向转向周期内的平均速度
   
   /*
   if(Timer&(Tu/5)==0)
@@ -172,7 +172,7 @@ void calculate_PWM(float angle,float Gyr)
     _flag&=~(_flag_vi);
   if(~(_flag&_flag_va))
     _flag&=~(_flag_ei);
-  
+  //xx2为速度环积分，不过并没有被使用
   if((_flag&(unsigned)_flag_vi)==0)
   {
     if(((B_V-v_aim)<0.1*v_aim)&&((B_V-v_aim)>(-0.1*v_aim)))
@@ -188,11 +188,12 @@ void calculate_PWM(float angle,float Gyr)
   //cal_I_V(B_V);
   //xx2=(float)(v_aim-B_V_)/dt*0.026;
   
-  cal_I(angle);
+  cal_I(angle);//角度积分计算
   
-  d=0;
-  int b=abs(B_V);
-  if(functionFlag&0x01)
+  d=0;          //清空变量d
+  //int b=abs(B_V);
+  
+  if(functionFlag&0x01)//直立环计算
   {
       float ga=0;
     //if(fabs(angle)<200.0)
@@ -204,13 +205,12 @@ void calculate_PWM(float angle,float Gyr)
       d=P*angle+ga;
     else
       d=P*angle-ga;
-    
   }
   
   angle_last=angle;
   
   
-  if(!(_flag&((unsigned)_flag_st)))
+  if(!(_flag&((unsigned)_flag_st)))//判断是否跌倒，如果跌到，则不再叠加转向环和直立环
   {
     if(angle>1000||angle<-1000||B_V>=500||B_V<=-500||B_VL>=500||B_VL<=-500||B_VR>=500||B_VR<=-500)//跌倒了赶紧站起来
     {
@@ -257,17 +257,21 @@ void calculate_PWM(float angle,float Gyr)
   
   
   ep=e_p;
+  
+  //去除死区电压
   if(d>0)
     d+=pwm_s;
   else if(d<0)
     d-=pwm_s;
   
-  if(!(functionFlag&0x02))
+  if(!(functionFlag&0x02))//如果转向环被关闭，则则直行
     ep=100000000.0;
   
   //d_l=d*(1-1/e_p);
   //d_r=d*(1+1/e_p);
  
+  
+  //下面计算实际的半径
   if(v_l==v_r)
   {
     if(ep>0)
@@ -275,7 +279,6 @@ void calculate_PWM(float angle,float Gyr)
     else if(e_p<0)
       e_B=-100000000.0;
   }
-  
   else
   {
     if(((v_l+v_r)==0))
@@ -288,7 +291,7 @@ void calculate_PWM(float angle,float Gyr)
     else
       e_B=(float)(v_l+v_r)/(v_r-v_l);
   }
- 
+ //给e_B限幅
   if(abs(B_V)<2)
   {
     if(((1000.0/fabs(e_B))>abs(B_V)))
@@ -315,7 +318,7 @@ void calculate_PWM(float angle,float Gyr)
     }
   }
   
-    turn_PID.ek=1.0/ep-1.0/e_B;
+    turn_PID.ek=1.0/ep-1.0/e_B;//目标半径与实际半径的差
   
   /*
   if((_flag&(unsigned)_flag_ei)==0)
