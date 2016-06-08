@@ -240,7 +240,7 @@ void PIT0_IRQHandler(void)
    }
 #endif
    
-#if 0
+#if 1
    Outdata[0]=5*angle;
    Outdata[1]=5*car_angle;
    Outdata[2]=5*Gyr;
