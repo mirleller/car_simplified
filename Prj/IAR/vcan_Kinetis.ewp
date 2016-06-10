@@ -163,9 +163,13 @@
       <name>ICCARM</name>
       <archiveVersion>2</archiveVersion>
       <data>
-        <version>29</version>
+        <version>30</version>
         <wantNonLocal>1</wantNonLocal>
         <debug>1</debug>
+        <option>
+          <name>CCOptimizationNoSizeConstraints</name>
+          <state>0</state>
+        </option>
         <option>
           <name>CCDefines</name>
           <state></state>
@@ -229,7 +233,7 @@
         <option>
           <name>CCAllowList</name>
           <version>1</version>
-          <state>0000000</state>
+          <state>00000000</state>
         </option>
         <option>
           <name>CCDebugInfo</name>
@@ -391,11 +395,12 @@
           <state>0</state>
         </option>
         <option>
-          <name>CCOptimizationNoSizeConstraints</name>
+          <name>CCNoLiteralPool</name>
           <state>0</state>
         </option>
         <option>
-          <name>CCNoLiteralPool</name>
+          <name>CCOptStrategySlave</name>
+          <version>0</version>
           <state>0</state>
         </option>
       </data>
@@ -1095,9 +1100,13 @@
       <name>ICCARM</name>
       <archiveVersion>2</archiveVersion>
       <data>
-        <version>29</version>
+        <version>30</version>
         <wantNonLocal>1</wantNonLocal>
         <debug>0</debug>
+        <option>
+          <name>CCOptimizationNoSizeConstraints</name>
+          <state>0</state>
+        </option>
         <option>
           <name>CCDefines</name>
           <state>NDEBUG</state>
@@ -1161,7 +1170,7 @@
         <option>
           <name>CCAllowList</name>
           <version>1</version>
-          <state>1111111</state>
+          <state>11111110</state>
         </option>
         <option>
           <name>CCDebugInfo</name>
@@ -1323,11 +1332,12 @@
           <state>0</state>
         </option>
         <option>
-          <name>CCOptimizationNoSizeConstraints</name>
+          <name>CCNoLiteralPool</name>
           <state>0</state>
         </option>
         <option>
-          <name>CCNoLiteralPool</name>
+          <name>CCOptStrategySlave</name>
+          <version>0</version>
           <state>0</state>
         </option>
       </data>
@@ -1951,7 +1961,7 @@
         </option>
         <option>
           <name>OGLastSavedByProductVersion</name>
-          <state>6.60.1.5099</state>
+          <state>7.10.1.6733</state>
         </option>
         <option>
           <name>GeneralEnableMisra</name>
@@ -2027,12 +2037,18 @@
       <name>ICCARM</name>
       <archiveVersion>2</archiveVersion>
       <data>
-        <version>29</version>
+        <version>30</version>
         <wantNonLocal>1</wantNonLocal>
         <debug>1</debug>
         <option>
+          <name>CCOptimizationNoSizeConstraints</name>
+          <state>0</state>
+        </option>
+        <option>
           <name>CCDefines</name>
-          <state></state>
+          <state>DEBUG</state>
+          <state>ARM_MATH_CM4</state>
+          <state>MK60DZ10</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -2093,7 +2109,7 @@
         <option>
           <name>CCAllowList</name>
           <version>1</version>
-          <state>0000000</state>
+          <state>00000000</state>
         </option>
         <option>
           <name>CCDebugInfo</name>
@@ -2161,7 +2177,15 @@
         </option>
         <option>
           <name>CCIncludePath2</name>
-          <state></state>
+          <state>$PROJ_DIR$\..\..\App</state>
+          <state>$PROJ_DIR$\..\..\App\Inc</state>
+          <state>$PROJ_DIR$\..\..\Board\Inc</state>
+          <state>$PROJ_DIR$\..\..\Chip\inc</state>
+          <state>$PROJ_DIR$\..\..\Chip\inc\IAR</state>
+          <state>$PROJ_DIR$\..\..\Chip\inc\kinetis</state>
+          <state>$PROJ_DIR$\..\..\Lib\CMSIS\Inc</state>
+          <state>$PROJ_DIR$\..\..\Lib\FatFs</state>
+          <state>$PROJ_DIR$\..\..\Lib\USB</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -2255,11 +2279,12 @@
           <state>0</state>
         </option>
         <option>
-          <name>CCOptimizationNoSizeConstraints</name>
+          <name>CCNoLiteralPool</name>
           <state>0</state>
         </option>
         <option>
-          <name>CCNoLiteralPool</name>
+          <name>CCOptStrategySlave</name>
+          <version>0</version>
           <state>0</state>
         </option>
       </data>
@@ -2959,9 +2984,13 @@
       <name>ICCARM</name>
       <archiveVersion>2</archiveVersion>
       <data>
-        <version>29</version>
+        <version>30</version>
         <wantNonLocal>1</wantNonLocal>
         <debug>0</debug>
+        <option>
+          <name>CCOptimizationNoSizeConstraints</name>
+          <state>0</state>
+        </option>
         <option>
           <name>CCDefines</name>
           <state>NDEBUG</state>
@@ -3025,7 +3054,7 @@
         <option>
           <name>CCAllowList</name>
           <version>1</version>
-          <state>1111111</state>
+          <state>11111110</state>
         </option>
         <option>
           <name>CCDebugInfo</name>
@@ -3187,11 +3216,12 @@
           <state>0</state>
         </option>
         <option>
-          <name>CCOptimizationNoSizeConstraints</name>
+          <name>CCNoLiteralPool</name>
           <state>0</state>
         </option>
         <option>
-          <name>CCNoLiteralPool</name>
+          <name>CCOptStrategySlave</name>
+          <version>0</version>
           <state>0</state>
         </option>
       </data>
