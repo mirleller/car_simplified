@@ -22,12 +22,6 @@ CStepIntDis=_ 0
 TraceBufferSize=0x00010000
 TraceStallIfFIFOFull=0x00000000
 TracePortSize=0x00000004
-[DataLog]
-LogEnabled=0
-SumEnabled=0
-GraphEnabled=0
-ShowTimeLog=1
-ShowTimeSum=1
 [MemConfig]
 Base=1
 Manual=0
@@ -37,22 +31,6 @@ Stop=1
 [Simulator]
 Freq=10000000
 MultiCoreRunAll=1
-[InterruptLog]
-LogEnabled=0
-SumEnabled=0
-GraphEnabled=0
-ShowTimeLog=1
-ShowTimeSum=1
-SumSortOrder=0
-[Interrupts]
-Enabled=1
-[MemoryMap]
-Enabled=0
-Base=0
-UseAuto=0
-TypeViolation=1
-UnspecRange=1
-ActionState=1
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""
@@ -68,11 +46,32 @@ Mode=1
 Graph=0
 Symbiont=0
 Exclusions=
+[InterruptLog]
+LogEnabled=0
+SumEnabled=0
+GraphEnabled=0
+ShowTimeLog=1
+ShowTimeSum=1
+SumSortOrder=0
+[DataLog]
+LogEnabled=0
+SumEnabled=0
+GraphEnabled=0
+ShowTimeLog=1
+ShowTimeSum=1
 [Disassemble mode]
 mode=0
 [Breakpoints2]
-Bp0=_ 0 "EMUL_CODE" "0x000048FE" 0 0 1 "" 0 "" 0
-Count=1
+Count=0
+[Interrupts]
+Enabled=1
+[MemoryMap]
+Enabled=0
+Base=0
+UseAuto=0
+TypeViolation=1
+UnspecRange=1
+ActionState=1
 [Aliases]
 A0=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\App\UserInterface.c" ""
 A1=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\MK60_PIT.c" ""
@@ -83,3 +82,6 @@ A5=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\MK60_uart.c" ""
 A6=_ "F:\车\恩智浦智能车比赛\CODE\FTM_PWM_示波器\Chip\src\misc.c" ""
 Count=7
 SuppressDialog=0
+[Trace1]
+Enabled=0
+ShowSource=1
